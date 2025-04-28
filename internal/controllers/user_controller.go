@@ -12,13 +12,26 @@ type AuthController struct {
 	repo *repositories.AuthRepository
 }
 
-func NerAuthController(repo *repositories.AuthRepository) *AuthController {
+func NewAuthController(repo *repositories.AuthRepository) *AuthController {
 
 	return &AuthController{repo: repo}
 }
 
 func (c *AuthController) CreateUser(ctx *gin.Context) {
 	var input models.User
+	if input.Username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username tidak boleh kosong"})
+		return
+	}
+	if input.Password == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password tidak boleh kosong"})
+	}
+	if len(input.Password) < 6 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password minimal 6 karakter"})
+	}
+	if input.Role != models.RoleAdminPerpus && input.Role != models.RoleAdminDPK {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
+	}
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -50,6 +63,20 @@ func (c *AuthController) GetUserByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, data)
 }
 func (c *AuthController) UpdateUser(ctx *gin.Context) {
+	var update models.User
+	if update.Username == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username tidak boleh kosong"})
+		return
+	}
+	if update.Password == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password tidak boleh kosong"})
+	}
+	if len(update.Password) < 6 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password minimal 6 karakter"})
+	}
+	if update.Role != models.RoleAdminPerpus && update.Role != models.RoleAdminDPK {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
+	}
 	id := ctx.Param("id")
 	var input models.User
 	if err := ctx.ShouldBindJSON(&input); err != nil {
@@ -76,4 +103,51 @@ func (c *AuthController) DeleteUser(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusNoContent, nil)
+}
+
+func (c *AuthController) Login(ctx *gin.Context) {
+	var input models.User
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := c.repo.GetUserByUsernameAndPassword(ctx.Request.Context(), input.Username, input.Password)
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+func (c *AuthController) GetUserByUsernameAndRole(ctx *gin.Context) {
+	username := ctx.Query("username")
+	role := ctx.Query("role")
+
+	user, err := c.repo.GetUserByUsernameAndRole(ctx.Request.Context(), username, role)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
+}
+func (c *AuthController) GetUserByRole(ctx *gin.Context) {
+	role := ctx.Query("role")
+
+	users, err := c.repo.GetUserByRole(ctx.Request.Context(), role)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Users not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, users)
+}
+func (c *AuthController) GetUserByIDAndRole(ctx *gin.Context) {
+	id := ctx.Param("id")
+	role := ctx.Query("role")
+
+	user, err := c.repo.GetUserByIDAndRole(ctx.Request.Context(), id, role)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+	ctx.JSON(http.StatusOK, user)
 }

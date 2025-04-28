@@ -6,7 +6,7 @@ import (
 
 type DataPerpustakaan struct { 
 	ID string `db:"ID" json:"ID"`
-	NamaPerpustakaan string `db:"namaPerpustakaan "json:"namaPerpustakaan"`
+	NamaPerpustakaan string `db:"namaPerpustakaan" json:"namaPerpustakaan"`
 	Alamat string `db:"alamat" json:"alamat"`
 	JenisPerpustakaan string `db:"jenisPerpustakaan" json:"jenisPerpustakaan"`
 	NomorInduk int `db:"nomorInduk" json:"nomorInduk"`

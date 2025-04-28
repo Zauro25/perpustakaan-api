@@ -73,3 +73,13 @@ func (c *DataController) DeletePerpustakaan(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusNoContent, nil)
 }
+
+func (c *DataController) submit_to_dpk(ctx *gin.Context, id string) {
+	data, err := c.repo.GetByID(ctx.Request.Context(), id)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Data Tidak Ditemukan"})
+		return
+	}
+	ctx.JSON(http.StatusOK, data)
+}
+	

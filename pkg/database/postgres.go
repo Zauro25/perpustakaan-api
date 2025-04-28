@@ -1,31 +1,61 @@
 package database
 
-import(
+import (
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"log"
-	"database/sql"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"os"
 )
 
-func database (){
-	db_Host := "localhost"
-	db_port := "5432"
-	db_user := "admin"
-	db_password  := "admin"
-	db_name := "Manajemen_Perpustakaan"
-
-	connect := fmt.Sprintf("host=%s port=%s user=%s password=%s name=%s", db_Host, db_port, db_user, db_password, db_name)
-
-	db, err := sql.Open("postgres", connect)
-	if err != nil{
-		log.Fatal("gagal terkoneksi ke postgresql", err)
+// InitDB menginisialisasi koneksi database dan mengembalikan *sqlx.DB
+func ConnectDB() (*sqlx.DB, error) {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+	
+	dbHost := os.Getenv("DB_HOST")
+	if dbHost == "" {
+		dbHost = "localhost"
 	}
-	defer db.Close()
+	
+	dbPort := os.Getenv("DB_PORT")
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	
+	dbUser := os.Getenv("DB_USER")
+	if dbUser == "" {
+		dbUser = "perpusapps"
+	}
+	
+	dbPassword := os.Getenv("DB_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "admin1234"
+	}
+	
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "manajemen_perpus"
+	}
 
+	// Format connection string yang benar untuk PostgreSQL
+	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		dbHost, dbPort, dbUser, dbPassword, dbName)
+
+	// Buka koneksi dengan sqlx
+	db, err := sqlx.Connect("postgres", connStr)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Gagal terkoneksi ke PostgreSQL")
+		return nil, err
+	}
+
+	// Test koneksi
 	err = db.Ping()
-	if err != nil{
-		log.Fatal("gagal ping ke database", err)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Gagal ping ke database")
+		return nil, err
 	}
 
-	fmt.Println("Berhasil terkoneksi ke database")
+	log.Info().Msg("Berhasil terkoneksi ke database")
+	return db, nil
 }
