@@ -10,6 +10,12 @@ import (
 
 type Role string
 
+type RegisterRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
+	Role     Role   `json:"role" binding:"required"`
+}
+
 
 const(
 	RoleAdminPerpus Role = "admin_perpustakaan"
@@ -21,7 +27,7 @@ type Permission map[Role][]string
 type User struct {
 	ID       uuid.UUID `db:"id" json:"id"`
 	Username string    `db:"username" json:"username"`
-	Password string    `db:"password" json:"-"` // Di-exclude dari JSON
+	Password string    `db:"password" json:"password.omitempty` // Di-exclude dari JSON
 	Role     Role      `db:"role" json:"role"`
 }
 

@@ -26,8 +26,8 @@ func (r *AuthRepository) GetUserByUername(ctx context.Context, username string) 
 }
 
 func (r *AuthRepository) CreateUser(ctx context.Context, user *models.User) error {
-	query := `insert into users (id, username, password, role) values ($1, $2, $3, $4)`
-	_, err := r.db.ExecContext(ctx, query, user.ID, user.Username, user.Password, user.Role)
+	query := `INSERT INTO users (id, username, password, role) VALUES (:id, :username, :password, :role)`
+	_, err := r.db.NamedExecContext(ctx, query, user)
 	return err
 }
 func (r *AuthRepository) UpdateUser(ctx context.Context, user *models.User) error {

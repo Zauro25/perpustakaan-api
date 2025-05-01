@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"net/http"
-	"github.com/google/uuid"
 	"github.com/Zauro25/perpus-app/internal/models"
 	"github.com/Zauro25/perpus-app/internal/repositories"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthController struct {
@@ -18,31 +19,45 @@ func NewAuthController(repo *repositories.AuthRepository) *AuthController {
 }
 
 func (c *AuthController) CreateUser(ctx *gin.Context) {
-	var input models.User
-	if input.Username == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Username tidak boleh kosong"})
-		return
-	}
-	if input.Password == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password tidak boleh kosong"})
-	}
-	if len(input.Password) < 6 {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Password minimal 6 karakter"})
-	}
-	if input.Role != models.RoleAdminPerpus && input.Role != models.RoleAdminDPK {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
-	}
+	var input models.RegisterRequest
+
+	// Bind JSON input
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	input.ID = uuid.New()
 
-	if err := c.repo.CreateUser(ctx.Request.Context(), &input); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "User creation failed"})
+	// Validasi role
+	if input.Role != models.RoleAdminPerpus && input.Role != models.RoleAdminDPK {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Role tidak valid"})
 		return
 	}
-	ctx.JSON(http.StatusCreated, input)
+
+	// Buat user baru
+	user := models.User{
+		ID:       uuid.New(), // Generate UUID otomatis
+		Username: input.Username,
+		Password: input.Password,
+		Role:     input.Role,
+	}
+
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengenkripsi password"})
+		return
+	}
+	user.Password = string(hashedPassword)
+
+	// Simpan ke database
+	if err := c.repo.CreateUser(ctx.Request.Context(), &user); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat user"})
+		return
+	}
+
+	// Jangan kembalikan password
+	user.Password = ""
+	ctx.JSON(http.StatusCreated, user)
 }
 
 func (c *AuthController) GetAllUsers(ctx *gin.Context) {
