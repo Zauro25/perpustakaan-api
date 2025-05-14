@@ -3,10 +3,10 @@ package controllers
 import (
 	"net/http"
 	"github.com/google/uuid"
-
 	"github.com/Zauro25/perpus-app/internal/models"
 	"github.com/Zauro25/perpus-app/internal/repositories"
 	"github.com/gin-gonic/gin"
+	"log"
 )
 
 type DataController struct {
@@ -23,10 +23,21 @@ func (c *DataController) CreatePerpustakaan(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	input.ID = uuid.New().String()
-	
+	input = models.DataPerpustakaan{
+		ID: uuid.New(),
+		NamaPerpustakaan: input.NamaPerpustakaan,
+		Alamat: input.Alamat,
+		JenisPerpustakaan: input.JenisPerpustakaan,
+		NomorInduk: input.NomorInduk,
+		JumlahCetak: input.JumlahCetak,
+		JumlahEbook: input.JumlahEbook,
+		JumlahSDM: input.JumlahSDM,
+		JumlahPengunjung: input.JumlahPengunjung,
+		JumlahAnggota: input.JumlahAnggota,
+	}
 	if err := c.repo.Create(ctx.Request.Context(), &input); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H {"error": "Data Gagal Disimpan"})
+		log.Printf("Error Create: %v", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal Menyimpan Data"})
 		return
 	}
 	ctx.JSON(http.StatusCreated, input)
@@ -35,6 +46,7 @@ func (c *DataController) CreatePerpustakaan(ctx *gin.Context) {
 func (c *DataController) GetAllPerpustakaan(ctx *gin.Context) {
 	data, err := c.repo.GetAll(ctx.Request.Context())
 	if err != nil {
+		log.Printf("Error GetAll: %v", err) 
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal Mengambil Data"})
 		return
 	}
@@ -50,6 +62,15 @@ func (c *DataController) GetPerpustakaanByID(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, data)
 }
+func (c *DataController) GetPerpustakaanByName(ctx *gin.Context) {
+	namaperpustakaan := ctx.Param("namaperpustakaan")
+	data, err := c.repo.GetByName(ctx.Request.Context(), namaperpustakaan)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Data Tidak Ditemukan"})
+		return
+	}
+	ctx.JSON(http.StatusOK, data)
+}
 func (c *DataController) UpdatePerpustakaan(ctx *gin.Context) {
 	id := ctx.Param("id")
 	var input models.DataPerpustakaan
@@ -57,7 +78,12 @@ func (c *DataController) UpdatePerpustakaan(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	input.ID = id
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
+		return
+	}
+	input.ID = parsedID
 
 	if err := c.repo.Update(ctx.Request.Context(), &input); err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal Memperbarui Data"})

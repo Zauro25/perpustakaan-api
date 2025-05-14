@@ -1,18 +1,19 @@
 package models
 
 import (
+	"github.com/google/uuid"
 
 )
 
 type DataPerpustakaan struct { 
-	ID string `db:"ID" json:"ID"`
-	NamaPerpustakaan string `db:"namaPerpustakaan" json:"namaPerpustakaan"`
+	ID uuid.UUID `db:"id" json:"id"`
+	NamaPerpustakaan string `db:"namaperpustakaan" json:"namaperpustakaan"`
 	Alamat string `db:"alamat" json:"alamat"`
-	JenisPerpustakaan string `db:"jenisPerpustakaan" json:"jenisPerpustakaan"`
-	NomorInduk int `db:"nomorInduk" json:"nomorInduk"`
-	JumlahCetak int `db:"jumlahCetak" json:"jumlahCetak"`
-	JumlahEbook int `db:"jumlahEbook" json:"jumlahEbook"`
-	JumlahSDM int `db:"jumlahSDM" json:"jumlahSDM"`
-	JumlahPengunjung int `db:"jumlahPengunjung" json:"jumlahPengunjung"`
-	JumlahAnggota int `db:"jumlahAnggota" json:"jumlahAnggota"`
+	JenisPerpustakaan string `db:"jenisperpustakaan" json:"jenisperpustakaan"`
+	NomorInduk int `db:"nomorinduk" json:"nomorinduk"`
+	JumlahCetak int `db:"jumlahcetak" json:"jumlahcetak"`
+	JumlahEbook int `db:"jumlahebook" json:"jumlahebook"`
+	JumlahSDM int `db:"jumlahsdm" json:"jumlahsdm"`
+	JumlahPengunjung int `db:"jumlahpengunjung" json:"jumlahpengunjung"`
+	JumlahAnggota int `db:"jumlahanggota" json:"jumlahanggota"`
 }
